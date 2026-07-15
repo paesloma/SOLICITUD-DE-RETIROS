@@ -1,4 +1,5 @@
 import streamlit as st
+from datetime import date
 
 # Configuración de la página
 st.set_page_config(page_title="Generador de Correos de Retiro", page_icon="📦", layout="centered")
@@ -45,7 +46,17 @@ with st.form("formulario_retiro_tecnico"):
     with col_des4:
         destino_direccion = st.text_input("Dirección (Destino)", value="Gonzalo Diaz de Pineda y juan de Montoya, atrás del coral centro de la Av de las Américas")
     with col_des5:
-        destino_obs = st.text_input("Observaciones (Destino)", value="REVISAR QUE EL ARTICULO NO SE ENCUENTRE CON GOLPES")
+        destino_obs_base = st.text_input("Observación General", value="REVISAR QUE EL ARTICULO NO SE ENCUENTRE CON GOLPES")
+
+    st.write("---")
+    st.write("### 🔍 Detalles del Artículo y Facturación")
+    col_art1, col_art2 = st.columns(2)
+    with col_art1:
+        codigo_articulo = st.text_input("Código del Artículo", placeholder="Ej. 5RCA-XXXX")
+        descripcion_articulo = st.text_input("Descripción del Artículo", placeholder="Ej. Refrigeradora No Frost")
+    with col_art2:
+        numero_factura = st.text_input("Número de Factura", placeholder="Ej. FAC-001-002-123456")
+        fecha_facturacion = st.date_input("Fecha de Facturación", value=date.today())
 
     # Botón de procesamiento
     procesar = st.form_submit_button("Generar Correo de Retiro")
@@ -57,7 +68,14 @@ if procesar:
     if cc_adicionales:
         destinatarios_finales += f" | CC: {cc_adicionales}"
 
-    # Reemplazo de celdas vacías por espacios para evitar que la tabla se deforme
+    # 2. Construcción de la celda de Observaciones con los datos del artículo y facturación
+    fecha_formateada = fecha_facturacion.strftime("%d/%m/%Y")
+    
+    observaciones_completas = f"{destino_obs_base}<br><br>" if destino_obs_base else ""
+    observaciones_completas += f"<b>Art:</b> {codigo_articulo} - {descripcion_articulo}<br>"
+    observaciones_completas += f"<b>FAC:</b> {numero_factura} ({fecha_formateada})"
+
+    # Valores por defecto para evitar celdas vacías feas
     o_ciud = origen_ciudad if origen_ciudad else "&nbsp;"
     o_nomb = origen_nombre if origen_nombre else "&nbsp;"
     o_dire = origen_direccion if origen_direccion else "&nbsp;"
@@ -68,9 +86,8 @@ if procesar:
     d_nomb = destino_nombre if destino_nombre else "&nbsp;"
     d_dire = destino_direccion if destino_direccion else "&nbsp;"
     d_cont = destino_contacto if destino_contacto else "&nbsp;"
-    d_obse = destino_obs if destino_obs else "&nbsp;"
 
-    # 2. Construcción de la Tabla en HTML Limpio y Compatible con Outlook/Gmail
+    # 3. Construcción de la Tabla en HTML Real
     tabla_html = f'''
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt; border: 1px solid #cccccc; margin: 15px 0;">
     <thead>
@@ -98,37 +115,34 @@ if procesar:
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_nomb}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_dire}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_cont}</td>
-            <td style="padding: 8px; border: 1px solid #cccccc;">{d_obse}</td>
+            <td style="padding: 8px; border: 1px solid #cccccc;">{observaciones_completas}</td>
         </tr>
     </tbody>
 </table>
 '''
 
-    # --- SECCIÓN DE RESULTADOS ---
-    st.success("✅ ¡Correo generado! Selecciona el texto de abajo directamente con tu cursor para copiarlo:")
+    # --- SECCIÓN DE RESULTADO VISUAL ---
+    st.success("✅ ¡Correo generado! Selecciona el bloque blanco de abajo directamente para copiarlo:")
     st.write("---")
     
-    # Destinatarios (Se mantienen en cuadro de código por facilidad de copia rápida)
+    # Destinatarios
     st.write("### 👥 1. Destinatarios")
     st.code(destinatarios_finales, language="text")
 
-    # Cuerpo del Mensaje y Tabla en formato HTML nativo
-    st.write("### 📝 2. Cuerpo del Mensaje (Selecciona y copia todo este bloque)")
+    # Cuerpo del Mensaje y Tabla en formato HTML para copia directa
+    st.write("### 📝 2. Cuerpo del Mensaje")
     
-    # Contenedor visual para copiar de forma limpia
-    st.markdown(
-        f"""
-        <div style="background-color: #ffffff; padding: 20px; border: 1px solid #dddddd; border-radius: 5px; color: #000000; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
-            Estimado ingeniero.<br><br>
-            Su gentil ayuda con el siguiente retiro el articulo:<br>
-            {tabla_html}
-            <br>
-            Agradecido a la atención de la presente<br><br>
-            Atentamente<br>
-            <b>Ing. Pablo Lopez</b><br>
-            Coordinador Postventa<br>
-            0995115782
-        </div>
-        """, 
-        unsafe_allow_html=True
-    )
+    cuerpo_final_html = f'''
+<div style="background-color: #ffffff; padding: 20px; border: 1px solid #dddddd; border-radius: 5px; color: #000000; font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
+    Estimado ingeniero.<br><br>
+    Su gentil ayuda con el siguiente retiro el articulo:<br>
+    {tabla_html}
+    <br>
+    Agradecido a la atención de la presente<br><br>
+    Atentamente<br>
+    <b>Ing. Pablo Lopez</b><br>
+    Coordinador Postventa<br>
+    0995115782
+</div>
+'''
+    st.markdown(cuerpo_final_html, unsafe_allow_html=True)
