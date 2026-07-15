@@ -30,7 +30,7 @@ with st.form("formulario_retiro_tecnico"):
     with col_ori4:
         origen_direccion = st.text_input("Dirección (Origen)", value="")
     with col_ori5:
-        origen_obs = st.text_input("Observaciones (Origen)", value="")
+        origen_obs_base = st.text_input("Observación General (Origen)", value="")
 
     st.write("---")
     st.write("### 🎯 Datos de DESTINO")
@@ -46,10 +46,10 @@ with st.form("formulario_retiro_tecnico"):
     with col_des4:
         destino_direccion = st.text_input("Dirección (Destino)", value="Gonzalo Diaz de Pineda y juan de Montoya, atrás del coral centro de la Av de las Américas")
     with col_des5:
-        destino_obs_base = st.text_input("Observación General", value="REVISAR QUE EL ARTICULO NO SE ENCUENTRE CON GOLPES")
+        destino_obs = st.text_input("Observación General (Destino)", value="REVISAR QUE EL ARTICULO NO SE ENCUENTRE CON GOLPES")
 
     st.write("---")
-    st.write("### 🔍 Detalles del Artículo y Facturación")
+    st.write("### 🔍 Detalles del Artículo y Facturación (Se mostrarán en Observaciones de Origen)")
     col_art1, col_art2 = st.columns(2)
     with col_art1:
         codigo_articulo = st.text_input("Código del Artículo", placeholder="Ej. 5RCA-XXXX")
@@ -68,24 +68,24 @@ if procesar:
     if cc_adicionales:
         destinatarios_finales += f" | CC: {cc_adicionales}"
 
-    # 2. Construcción de la celda de Observaciones con los datos del artículo y facturación
+    # 2. Construcción de la celda de Observaciones de Origen con los datos del artículo y facturación
     fecha_formateada = fecha_facturacion.strftime("%d/%m/%Y")
     
-    observaciones_completas = f"{destino_obs_base}<br><br>" if destino_obs_base else ""
-    observaciones_completas += f"<b>Art:</b> {codigo_articulo} - {descripcion_articulo}<br>"
-    observaciones_completas += f"<b>FAC:</b> {numero_factura} ({fecha_formateada})"
+    origen_obs_completa = f"{origen_obs_base}<br><br>" if origen_obs_base else ""
+    origen_obs_completa += f"<b>Art:</b> {codigo_articulo} - {descripcion_articulo}<br>"
+    origen_obs_completa += f"<b>FAC:</b> {numero_factura} ({fecha_formateada})"
 
     # Valores por defecto para evitar celdas vacías feas
     o_ciud = origen_ciudad if origen_ciudad else "&nbsp;"
     o_nomb = origen_nombre if origen_nombre else "&nbsp;"
     o_dire = origen_direccion if origen_direccion else "&nbsp;"
     o_cont = origen_contacto if origen_contacto else "&nbsp;"
-    o_obse = origen_obs if origen_obs else "&nbsp;"
 
     d_ciud = destino_ciudad if destino_ciudad else "&nbsp;"
     d_nomb = destino_nombre if destino_nombre else "&nbsp;"
     d_dire = destino_direccion if destino_direccion else "&nbsp;"
     d_cont = destino_contacto if destino_contacto else "&nbsp;"
+    d_obse = destino_obs if destino_obs else "&nbsp;"
 
     # 3. Construcción de la Tabla en HTML Real
     tabla_html = f'''
@@ -107,7 +107,7 @@ if procesar:
             <td style="padding: 8px; border: 1px solid #cccccc;">{o_nomb}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{o_dire}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{o_cont}</td>
-            <td style="padding: 8px; border: 1px solid #cccccc;">{o_obse}</td>
+            <td style="padding: 8px; border: 1px solid #cccccc;">{origen_obs_completa}</td>
         </tr>
         <tr>
             <td style="padding: 8px; border: 1px solid #cccccc; font-weight: bold; background-color: #f9f9f9;">DESTINO</td>
@@ -115,7 +115,7 @@ if procesar:
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_nomb}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_dire}</td>
             <td style="padding: 8px; border: 1px solid #cccccc;">{d_cont}</td>
-            <td style="padding: 8px; border: 1px solid #cccccc;">{observaciones_completas}</td>
+            <td style="padding: 8px; border: 1px solid #cccccc;">{d_obse}</td>
         </tr>
     </tbody>
 </table>
