@@ -7,14 +7,28 @@ st.set_page_config(page_title="Generador de Correos de Retiro", page_icon="📦"
 st.title("📦 Gestión de Retiros - Postventa")
 st.subheader("Complete el formulario para estructurar el correo de retiro")
 
+# --- MENÚ DE SELECCIÓN DE FLUJO ---
+tipo_retiro = st.selectbox(
+    "Seleccione el Tipo / Zona de Retiro",
+    ["General / Cuenca", "Retiro GYE (Guayaquil)"]
+)
+
+# Definición automática de correos según el menú
+if tipo_retiro == "Retiro GYE (Guayaquil)":
+    para_default = "dsalas@gerardoortiz.com, pedigye@gerardoortiz.com"
+    cc_default = "agallardo@gerardoortiz.com, scabrera@gerardoortiz.com, jr.electric.sa@gmail.com, stecnico@gerardoortiz.com, soportego@gerardoortiz.com, postventago@gerardoortiz.com"
+else:
+    para_default = "operaciones@empresa.com, finanzas@empresa.com"
+    cc_default = ""
+
 # --- FORMULARIO DE INGRESO ---
 with st.form("formulario_retiro_tecnico"):
     st.write("### 👥 Configuración de Destinatarios")
     col_dest1, col_dest2 = st.columns(2)
     with col_dest1:
-        destinatarios_base = st.text_input("Destinatarios (Para)", value="operaciones@empresa.com, finanzas@empresa.com")
+        destinatarios_base = st.text_input("Destinatarios (Para)", value=para_default)
     with col_dest2:
-        cc_adicionales = st.text_input("En copia (CC)", placeholder="ejemplo@correo.com")
+        cc_adicionales = st.text_input("En copia (CC)", value=cc_default)
 
     st.write("---")
     st.write("### 📍 Datos de ORIGEN")
@@ -36,7 +50,7 @@ with st.form("formulario_retiro_tecnico"):
     st.write("### 🎯 Datos de DESTINO")
     col_des1, col_des2, col_des3 = st.columns(3)
     with col_des1:
-        destino_ciudad = st.text_input("Ciudad (Destino)", value="CUENCA")
+        destino_ciudad = st.text_input("Ciudad (Destino)", value="CUENCA" if tipo_retiro != "Retiro GYE (Guayaquil)" else "GUAYAQUIL")
     with col_des2:
         destino_nombre = st.text_input("Nombre / Entidad (Destino)", value="SERVICIO TECNICO")
     with col_des3:
@@ -49,11 +63,12 @@ with st.form("formulario_retiro_tecnico"):
         destino_obs = st.text_input("Observación General (Destino)", value="REVISAR QUE EL ARTICULO NO SE ENCUENTRE CON GOLPES")
 
     st.write("---")
-    st.write("### 🔍 Detalles del Artículo y Facturación (Se mostrarán en Observaciones de Origen)")
+    st.write("### 🔍 Detalles del Artículo, Facturación y Problema (Origen)")
     col_art1, col_art2 = st.columns(2)
     with col_art1:
         codigo_articulo = st.text_input("Código del Artículo", placeholder="Ej. 5RCA-XXXX")
         descripcion_articulo = st.text_input("Descripción del Artículo", placeholder="Ej. Refrigeradora No Frost")
+        problema_articulo = st.text_area("Problema / Daño Reportado", placeholder="Ej. No enciende / Fuga de gas / Compresor defectuoso")
     with col_art2:
         numero_factura = st.text_input("Número de Factura", placeholder="Ej. FAC-001-002-123456")
         fecha_facturacion = st.date_input("Fecha de Facturación", value=date.today())
@@ -64,16 +79,18 @@ with st.form("formulario_retiro_tecnico"):
 # --- LÓGICA DE GENERACIÓN ---
 if procesar:
     # 1. Construcción de Destinatarios
-    destinatarios_finales = destinatarios_base
+    destinatarios_finales = f"PARA: {destinatarios_base}"
     if cc_adicionales:
-        destinatarios_finales += f" | CC: {cc_adicionales}"
+        destinatarios_finales += f"\nCC: {cc_adicionales}"
 
-    # 2. Construcción de la celda de Observaciones de Origen con los datos del artículo y facturación
+    # 2. Construcción de la celda de Observaciones de Origen con los detalles del artículo, facturación y problema
     fecha_formateada = fecha_facturacion.strftime("%d/%m/%Y")
     
     origen_obs_completa = f"{origen_obs_base}<br><br>" if origen_obs_base else ""
     origen_obs_completa += f"<b>Art:</b> {codigo_articulo} - {descripcion_articulo}<br>"
-    origen_obs_completa += f"<b>FAC:</b> {numero_factura} ({fecha_formateada})"
+    origen_obs_completa += f"<b>FAC:</b> {numero_factura} ({fecha_formateada})<br>"
+    if problema_articulo:
+        origen_obs_completa += f"<b>Problema:</b> {problema_articulo}"
 
     # Valores por defecto para evitar celdas vacías feas
     o_ciud = origen_ciudad if origen_ciudad else "&nbsp;"
