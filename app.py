@@ -34,9 +34,9 @@ with st.form("formulario_retiro_tecnico"):
     st.write("### 📍 Datos de ORIGEN")
     col_ori1, col_ori2, col_ori3 = st.columns(3)
     with col_ori1:
-        origen_ciudad = st.text_input("Ciudad (Origen)", value="")
+        origen_ciudad = st.text_input("Ciudad (Origen)", value="GUAYAQUIL" if tipo_retiro == "Retiro GYE (Guayaquil)" else "")
     with col_ori2:
-        origen_nombre = st.text_input("Nombre / Entidad (Origen)", value="")
+        origen_nombre = st.text_input("Nombre / Entidad / Cliente (Origen)", placeholder="Ej. SANCHEZ PONCE PLUTARCO WILLNEY")
     with col_ori3:
         origen_contacto = st.text_input("Contacto (Origen)", value="")
     
@@ -66,9 +66,9 @@ with st.form("formulario_retiro_tecnico"):
     st.write("### 🔍 Detalles del Artículo, Facturación y Problema (Origen)")
     col_art1, col_art2 = st.columns(2)
     with col_art1:
-        codigo_articulo = st.text_input("Código del Artículo", placeholder="Ej. 5RCA-XXXX")
-        descripcion_articulo = st.text_input("Descripción del Artículo", placeholder="Ej. Refrigeradora No Frost")
-        problema_articulo = st.text_area("Problema / Daño Reportado", placeholder="Ej. No enciende / Fuga de gas / Compresor defectuoso")
+        codigo_articulo = st.text_input("Código del Artículo", placeholder="Ej. 5HEC004")
+        descripcion_articulo = st.text_input("Descripción del Artículo", placeholder="Ej. CONGELADOR HORIZONTAL HB-C-508L")
+        problema_articulo = st.text_area("Problema / Daño Reportado", placeholder="Ej. No enciende / Fuga de gas")
     with col_art2:
         numero_factura = st.text_input("Número de Factura", placeholder="Ej. FAC-001-002-123456")
         fecha_facturacion = st.date_input("Fecha de Facturación", value=date.today())
@@ -83,7 +83,15 @@ if procesar:
     if cc_adicionales:
         destinatarios_finales += f"\nCC: {cc_adicionales}"
 
-    # 2. Construcción de la celda de Observaciones de Origen con los detalles del artículo, facturación y problema
+    # 2. Construcción Dinámica del Asunto del Correo
+    cod_art_val = codigo_articulo.strip().upper() if codigo_articulo else "S/C"
+    desc_art_val = descripcion_articulo.strip().upper() if descripcion_articulo else "S/D"
+    cli_val = origen_nombre.strip().upper() if origen_nombre else "CLIENTE"
+    ciu_ori_val = origen_ciudad.strip().upper() if origen_ciudad else "CIUDAD"
+    
+    asunto_correo = f"RETIRO - {cod_art_val} - {desc_art_val} - {cli_val} - {ciu_ori_val}"
+
+    # 3. Construcción de la celda de Observaciones de Origen
     fecha_formateada = fecha_facturacion.strftime("%d/%m/%Y")
     
     origen_obs_completa = f"{origen_obs_base}<br><br>" if origen_obs_base else ""
@@ -104,7 +112,7 @@ if procesar:
     d_cont = destino_contacto if destino_contacto else "&nbsp;"
     d_obse = destino_obs if destino_obs else "&nbsp;"
 
-    # 3. Construcción de la Tabla en HTML Real
+    # 4. Construcción de la Tabla en HTML Real
     tabla_html = f'''
 <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11pt; border: 1px solid #cccccc; margin: 15px 0;">
     <thead>
@@ -142,9 +150,10 @@ if procesar:
     st.success("✅ ¡Correo generado! Selecciona el bloque blanco de abajo directamente para copiarlo:")
     st.write("---")
     
-    # Destinatarios
-    st.write("### 👥 1. Destinatarios")
-    st.code(destinatarios_finales, language="text")
+    # Destinatarios y Asunto
+    st.write("### 👥 1. Información de Cabecera (Destinatarios y Asunto)")
+    cabecera_texto = f"{destinatarios_finales}\nASUNTO: {asunto_correo}"
+    st.code(cabecera_texto, language="text")
 
     # Cuerpo del Mensaje y Tabla en formato HTML para copia directa
     st.write("### 📝 2. Cuerpo del Mensaje")
